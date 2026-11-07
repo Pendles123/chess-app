@@ -1,0 +1,5 @@
+
+/* When the player moves mouse over square */
+.square:hover {
+    background-color: lightgray;
+}
