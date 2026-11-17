@@ -32,3 +32,10 @@ frontend/.env.local
 
 # macOS Finder metadata
 .DS_Store
+
+# Maven build output
+backend/target/
+
+# IntelliJ IDEA
+.idea/
+*.iml
