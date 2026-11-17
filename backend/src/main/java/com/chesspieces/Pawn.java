@@ -48,10 +48,10 @@ public class Pawn extends ChessPieces {
         // com.chesspieces.Pawn captures White/Black
         if(Math.abs(newX - curX) == 1) {
 
-            if (curY - newY == 1 && colour.equals(PlayerColour.WHITE)) {
+            if (newY - curY == 1 && colour.equals(PlayerColour.WHITE)) {
                 return true;
             }
-            return newY - curY == 1 && colour.equals(PlayerColour.BLACK);
+            return curY - newY == 1 && colour.equals(PlayerColour.BLACK);
         }
         return false;
     }

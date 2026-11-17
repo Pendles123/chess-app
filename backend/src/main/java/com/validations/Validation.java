@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.Optional;
 import java.util.Iterator;
 
+
 public class Validation {
 
     private Game game;
@@ -49,10 +50,18 @@ public class Validation {
             return false;
         }
 
-        Optional<ChessPieces> thePiece = board.getPiece(move.getTo().getRank(), move.getTo().getFile()); //move[3], move[2]
+        // This gets the destination square
+        Optional<ChessPieces> optToPosition = board.getPiece(move.getTo().getRank(), move.getTo().getFile()); // Destination square
         ChessPieces moveSquare = null;
-        if (thePiece.isPresent()) {
-            moveSquare = board.getPiece(move.getTo().getRank(), move.getTo().getFile()).get();
+        if (optToPosition.isPresent()) {
+            moveSquare = optToPosition.get();
+        }
+
+        // This gets the origin square
+        Optional<ChessPieces> optFromPosition = board.getPiece(move.getFrom().getRank(), move.getFrom().getFile()); // Destination square
+        ChessPieces originSquare = null;
+        if (optFromPosition.isPresent()) {
+            originSquare = optFromPosition.get();
         }
 
         // Checks to see if square is taken by a piece of the same colour
@@ -61,10 +70,22 @@ public class Validation {
             return false;
         }
 
+        System.out.println("Entering pawnIsCapturing()");
+
+        // Pawn is capturing piece
+        if (originSquare instanceof Pawn && move.getFrom().getFile() != move.getTo().getFile() && optToPosition.isPresent()) {
+            if(!pawnIsCapturing(move)) {
+                System.out.println("pawnIsCapturing() is false");
+                return false;
+            }
+        }
+
+        System.out.println("Passed pawnIscapturing() method");
+
         // Checks enPassant is valid
-        if(piece instanceof Pawn && move.getFrom().getFile() != move.getTo().getFile()) {
+        if(piece instanceof Pawn && move.getFrom().getFile() != move.getTo().getFile() && optToPosition.isEmpty()) {
             if(!enPassant(move, game)) {
-                System.out.println("En Passant is valid");
+                System.out.println("En Passant is invalid");
                 return false;
             }
         }
@@ -73,6 +94,20 @@ public class Validation {
         if(isPiecePinned(move.getFrom(), player)) {
             System.out.println("Piece is pinned");
             return false;
+        }
+
+        // Checks if Queen, Bishop or Rook is blocked
+        if(originSquare instanceof Queen || originSquare instanceof Bishop || originSquare instanceof Rook) {
+            if (!majorPieceNotBlocked(move)) {
+                return false;
+            }
+        }
+
+        // Checks if Pawn is blocked
+        if (originSquare instanceof Pawn && move.getFrom().getFile() == move.getTo().getFile()) {
+            if (!pawnIsNotBlocked(move)) {
+                return false;
+            }
         }
 
         // Checks if checkmate
@@ -306,7 +341,56 @@ public class Validation {
         return kingPosition;
     }
 
-// Methods that find the squares the opponent controls
+    // Pawn is capturing
+    public boolean pawnIsCapturing(Move move) {
+        Optional<ChessPieces> optCapturedPiece = board.getPiece(move.getTo().getRank(), move.getTo().getFile());
+
+        if (optCapturedPiece.isPresent()) {
+            ChessPieces capturedPiece = optCapturedPiece.get();
+            return capturedPiece.getColour() != player;
+        }
+        return false;
+    }
+
+    // Verifies if Pawn is blocked
+    public boolean pawnIsNotBlocked(Move move) {
+        Optional<ChessPieces> optPiece = board.getPiece(move.getTo().getRank(), move.getTo().getFile());
+
+        // if pawn advanced 2 squares
+        if(Math.abs(move.getFrom().getRank() - move.getTo().getRank()) == 2) {
+            int middleSquareRank = (move.getFrom().getRank() + move.getTo().getRank()) / 2;
+            Optional<ChessPieces> optPieceForDoubleSquareAdvance = board.getPiece(middleSquareRank, move.getFrom().getFile());
+            return optPieceForDoubleSquareAdvance.isEmpty();
+        }
+        return optPiece.isEmpty();
+    }
+
+    // This method verifies that traversing pieces aren't blocked (Queen, Bishop, Rook)
+    public boolean majorPieceNotBlocked(Move move) {
+        ArrayList<Position> controlledSquares = new ArrayList<>();
+        Optional<ChessPieces> optPiece = board.getPiece(move.getFrom().getRank(), move.getFrom().getFile());
+        if (optPiece.isPresent()) {
+            ChessPieces piece = optPiece.get();
+            if (piece instanceof Queen) {
+                addBishopControlledSquares(move.getFrom(), controlledSquares);
+                addRookControlledSquares(move.getFrom(), controlledSquares);
+            } else if (piece instanceof Bishop) {
+                addBishopControlledSquares(move.getFrom(), controlledSquares);
+            } else {
+                addRookControlledSquares(move.getFrom(), controlledSquares);
+            }
+
+            for (Position position : controlledSquares) {
+                if(controlledSquares.contains(position)) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    // Methods that find the squares the opponent controls
     public ArrayList<Position> pawnsControlledSquares(ArrayList<Position> pawnPositions) {
         ArrayList<Position> controlledSquares = new ArrayList<>();
 
@@ -724,6 +808,10 @@ public class Validation {
         controlledSquares.addAll(queenControlledSquares(findPiece(Queen.class, opponent)));
         controlledSquares.addAll(kingControlledSquares(findPiece(King.class, opponent)));
 
+        for (Position square : controlledSquares) {
+            System.out.println(square);
+        }
+
         for (Position move : possibleKingMoves) {
             if (!controlledSquares.contains(move)) {
                 return false; // King has at least one safe move
@@ -746,9 +834,10 @@ public class Validation {
         controlledSquares.addAll(queenControlledSquares(findPiece(Queen.class, opponent)));
         controlledSquares.addAll(kingControlledSquares(findPiece(King.class, opponent)));
 
-        for (Position squares : controlledSquares) {
-            System.out.println(squares);
+        for (Position theSquare : controlledSquares) {
+            System.out.println(square);
         }
+        System.out.println(player);
         return controlledSquares.contains(square);
     }
 }

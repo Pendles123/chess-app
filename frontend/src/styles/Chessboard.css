@@ -1,5 +1,6 @@
 .board {
     display: grid;
+    grid-template-columns: 1fr;
     grid-template-rows: repeat(8, 60px);
     width: 480px;
     border: 2px solid black;
@@ -14,6 +15,7 @@
 .square {
     width: 60px;
     height: 60px;
+    border: 1px solid black;
     display: flex;              /* flexbox centers contents */
     align-items: center;        /* vertical centering */
     justify-content: center;    /* horizontal centering */

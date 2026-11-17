@@ -1,20 +1,25 @@
-import Square from "./Square.jsx"
 
-function Row({row, rowIndex}) {
+import Square from "./Square.jsx";
+
+function Row({ row, rowIndex, isBlackTurn }) {
+
+    const colOrder = Array.from(
+        { length: 8 },
+        (_, index) => isBlackTurn ? 7 - index : index
+    );
 
     return (
         <div className="row">
-
-            {row.map((square, colIndex) =>
-                    (
-                        <Square key={`${rowIndex}-${colIndex}`}
-                                square={square}
-                                isDark={(rowIndex + colIndex) % 2 === 1}
-                                rowIndex={rowIndex}
-                                colIndex={colIndex}/>
-                    ))}
+            {colOrder.map((colIndex) => (
+                <Square
+                    key={`${rowIndex}-${colIndex}`}
+                    square={row[colIndex]}
+                    rowIndex={rowIndex}
+                    colIndex={colIndex}
+                />
+            ))}
         </div>
-            )
+    );
 }
 
-export default Row
+export default Row;

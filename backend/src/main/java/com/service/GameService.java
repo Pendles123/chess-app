@@ -18,11 +18,9 @@ import java.util.Optional;
 @Service
 public class GameService {
 
-    private final Validation validation;
     private final GameRepository repository;
 
-    public GameService(Validation validation, GameRepository repository, ExecuteMove updateBoard) {
-        this.validation = validation;
+    public GameService(GameRepository repository) {
         this.repository = repository;
     }
 
@@ -33,8 +31,8 @@ public class GameService {
         Game currentGame = repository.getGame(gameId);
         ChessBoard board = currentGame.getBoard();
         GameStatus status = currentGame.getStatus();
+        Validation validation = new Validation(currentGame);
         ExecuteMove execution = new ExecuteMove(currentGame);
-        PromotionPiece promotedPawn = request.promotionPiece();
         PieceDTO[][] dtoBoard;
 
         // convert request to Move object
@@ -62,7 +60,7 @@ public class GameService {
         execution.updateBoard(currentGame, move, board);
         updatedBoard = board.deepCopy();
         currentGame.setBoard(updatedBoard);
-        currentGame.advanceTurn();
+        System.out.println("The current player is now " + currentGame.getCurrentPlayer());
         repository.saveBoard(currentGame);
         dtoBoard = mapBoard(updatedBoard.getBoard());
         

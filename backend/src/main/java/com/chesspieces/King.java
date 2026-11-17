@@ -11,6 +11,10 @@ public class King extends ChessPieces implements Castling {
     @Override
     public boolean pieceMovement(int curY, int curX, int newY, int newX, PlayerColour colour) {
 
+        if (curX == newX && curY == newY) {
+            return false;
+        }
+
         if (Math.abs(newX - curX) == 2 && newY == curY) {
             return true;
         }

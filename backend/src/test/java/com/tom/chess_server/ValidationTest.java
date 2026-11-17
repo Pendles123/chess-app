@@ -18,7 +18,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class ValidationTest {
-/*
+
     @Test
     void legalMovesReturnsAllFourteenSquaresForAnUnblockedRook() {
         // Arrange: build a small, predictable board position.
@@ -484,7 +484,7 @@ public class ValidationTest {
         validation = new Validation(game);
         from.setRank(4);
         from.setFile(4);
-        to.setRank(3);
+        to.setRank(5);
         to.setFile(3);
         // White Pawn executes en passant
         move.setFrom(from);
@@ -497,6 +497,77 @@ public class ValidationTest {
 
         Optional<ChessPieces> optionalCapturedPiece = board.getPiece(6, 3);
         assertTrue(optionalCapturedPiece.isEmpty());
+
+    }
+
+    @Test
+    void invalidEnPassantAttempt() {
+        // Arrange: build a small, predictable board position.
+        Game game = new Game(1L);
+        ChessBoard board = new ChessBoard();
+        game.setBoard(board);
+        game.setMoveCounter(6);
+
+        board.setBoard(0, 4,
+                new King(0, 4, PlayerColour.BLACK, PieceType.KING));
+        board.setBoard(7, 7,
+                new King(7, 7, PlayerColour.WHITE, PieceType.KING));
+        board.setBoard(3, 4,
+                new Pawn(3, 4, PlayerColour.WHITE, game.getMoveCounter(), PieceType.PAWN));
+        board.setBoard(6, 3,
+                new Pawn(6, 3, PlayerColour.BLACK, 0, PieceType.PAWN));
+
+        Position from = new Position(3,4);
+        Position to = new Position(4,4);
+
+        ChessPieces whitePawn1stMove = board.getPiece(from.getRank(), from.getFile()).orElseThrow();
+        ExecuteMove movements = new ExecuteMove(game);
+
+        // White Pawn Advances
+        Move move = new Move(from, to);
+        Validation validation = new Validation(game);
+            assertTrue(validation.isMoveValid(whitePawn1stMove,move));
+
+        movements.updateBoard(game, move, board);
+        validation = new Validation(game);
+        from = new Position(6, 3);
+        to = new Position(4, 3);
+        move = new Move(from, to);
+
+        // Black Pawn advances
+        ChessPieces blackMoves2Squares = board.getPiece(from.getRank(), from.getFile()).orElseThrow();
+            assertTrue(validation.isMoveValid(blackMoves2Squares,move));
+
+        movements.updateBoard(game, move, board);
+        validation = new Validation(game);
+        from = new Position(7, 7);
+        to = new Position(7, 6);
+        move = new Move(from, to);
+
+        // White King moves
+        move.setFrom(from);
+        move.setTo(to);
+        ChessPieces kingMoves = board.getPiece(from.getRank(), from.getFile()).orElseThrow();
+            assertTrue(validation.isMoveValid(kingMoves,move));
+        movements.updateBoard(game, move, board);
+        validation = new Validation(game);
+
+        from = new Position(0, 4);
+        to = new Position(0, 3);
+        move = new Move(from, to);
+
+        // Black King moves
+        ChessPieces blackKingMoves = board.getPiece(from.getRank(), from.getFile()).orElseThrow();
+        assertTrue(validation.isMoveValid(blackKingMoves,move));
+        movements.updateBoard(game, move, board);
+        validation = new Validation(game);
+
+        from = new Position(4, 4);
+        to = new Position(5, 3);
+        move = new Move(from, to);
+        // White Pawn executes en passant
+        ChessPieces whitePawnAttemptsEnPassant = board.getPiece(from.getRank(), from.getFile()).orElseThrow();
+            assertFalse(validation.isMoveValid(whitePawnAttemptsEnPassant,move));
 
     }
 
@@ -557,7 +628,7 @@ public class ValidationTest {
         // Assert: verify that castling can't occur.
         assertFalse(validMove);
     }
-*/
+
     @Test
     void kingSideCastlingUpdatingBoardTest() {
         // Arrange: build a small, predictable board position.
@@ -605,5 +676,116 @@ public class ValidationTest {
 
         // Assert: verify that castling can't occur.
         assertEquals(2, numberOfRooks);
+    }
+
+    @Test
+    void pawnIsBlockedTest() {
+        // Arrange: build a small, predictable board position.
+        Game game = new Game(1L);
+        ChessBoard board = new ChessBoard();
+        game.setBoard(board);
+
+        board.setBoard(7, 7,
+                new King(7, 7, PlayerColour.BLACK, PieceType.KING));
+        board.setBoard(0, 4,
+                new King(0, 4, PlayerColour.WHITE, PieceType.KING));
+        ChessPieces whitePawn = new Pawn(3,3, PlayerColour.WHITE, 0, PieceType.PAWN);
+        board.setBoard(3, 3, whitePawn);
+
+        board.setBoard(4, 3,
+                new Bishop(4, 3, PlayerColour.BLACK, PieceType.BISHOP));
+
+        Position from = new Position(3, 3);
+        Position to = new Position(4,3);
+        Move move = new Move(from, to);
+        Validation validation = new Validation(game);
+
+        // Act: call the one method this test is about.
+        boolean validMove = validation.isMoveValid(whitePawn, move);
+
+        // Assert: verify that Pawn can't advance.
+        assertFalse(validMove);
+    }
+
+    @Test
+    void pawnIsBlockedByOwnPieceTest() {
+        // Arrange: build a small, predictable board position.
+        Game game = new Game(1L);
+        ChessBoard board = new ChessBoard();
+        game.setBoard(board);
+
+        board.setBoard(7, 7,
+                new King(7, 7, PlayerColour.BLACK, PieceType.KING));
+        board.setBoard(0, 4,
+                new King(0, 4, PlayerColour.WHITE, PieceType.KING));
+        ChessPieces whitePawn = new Pawn(3,3, PlayerColour.WHITE, 0, PieceType.PAWN);
+        board.setBoard(3, 3, whitePawn);
+
+        board.setBoard(4, 3,
+                new Bishop(4, 3, PlayerColour.WHITE, PieceType.BISHOP));
+
+        Position from = new Position(3, 3);
+        Position to = new Position(4,3);
+        Move move = new Move(from, to);
+        Validation validation = new Validation(game);
+
+        // Act: call the one method this test is about.
+        boolean validMove = validation.isMoveValid(whitePawn, move);
+
+        // Assert: verify that Pawn can't advance.
+        assertFalse(validMove);
+    }
+
+    @Test
+    void pawnIsCapturingTest() {
+        // Arrange: build a small, predictable board position.
+        Game game = new Game(1L);
+        ChessBoard board = new ChessBoard();
+        game.setBoard(board);
+
+        board.setBoard(7, 7,
+                new King(7, 7, PlayerColour.BLACK, PieceType.KING));
+        board.setBoard(0, 4,
+                new King(0, 4, PlayerColour.WHITE, PieceType.KING));
+        ChessPieces whitePawn = new Pawn(3,3, PlayerColour.WHITE, 0, PieceType.PAWN);
+        board.setBoard(3, 3, whitePawn);
+
+        board.setBoard(4, 4,
+                new Bishop(4, 4, PlayerColour.BLACK, PieceType.BISHOP));
+
+        Position from = new Position(3, 3);
+        Position to = new Position(4,4);
+        Move move = new Move(from, to);
+        Validation validation = new Validation(game);
+
+        // Act: call the one method this test is about.
+        boolean validMove = validation.isMoveValid(whitePawn, move);
+
+        // Assert: verify that Pawn can't advance.
+        assertTrue(validMove);
+    }
+
+    @Test
+    void checkmateDoubleRookTest() {
+        // Arrange: build a small, predictable board position.
+        Game game = new Game(1L);
+        ChessBoard board = new ChessBoard();
+        game.setBoard(board);
+
+        board.setBoard(7, 7,
+                new King(7, 7, PlayerColour.BLACK, PieceType.KING));
+        board.setBoard(0, 4,
+                new King(0, 4, PlayerColour.WHITE, PieceType.KING));
+        board.setBoard(7, 1,
+                new Rook(7,1, PlayerColour.WHITE, PieceType.ROOK));
+        board.setBoard(6, 2,
+                new Rook(6,2, PlayerColour.WHITE, PieceType.ROOK));
+
+        Validation validation = new Validation(game);
+        game.advanceTurn();
+        boolean checkmateCheck = validation.checkmate(game.getCurrentPlayer());
+
+        // Assert: verify that Pawn can't advance.
+        assertTrue(checkmateCheck);
     }
 }

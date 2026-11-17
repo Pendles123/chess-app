@@ -12,6 +12,7 @@ public class Game {
 
     public Game(long id) {
         this.id = id;
+        this.board = new ChessBoard();
         this.currentPlayer = PlayerColour.WHITE;
         this.moveCounter = 0;
         this.status = GameStatus.NORMAL;
